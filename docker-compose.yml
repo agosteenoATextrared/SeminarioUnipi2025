@@ -1,0 +1,60 @@
+services:
+  postgres:
+    profiles: ["dev","all"]
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgresDB
+    ports:
+      - "5432:5432"
+    networks:
+      - quarkus-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  quarkus-app:
+    profiles: ["all"]
+    image: seminario-unipi-2025-transport-jvm:latest
+    container_name: quarkus-app
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/postgresDB
+      QUARKUS_DATASOURCE_USERNAME: user
+      QUARKUS_DATASOURCE_PASSWORD: password
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - quarkus-network
+
+#SeminarioUnipi2025: DA IMPLEMENTARE
+#
+# il microservizio di quarkus è esposto all'esterno direttamente. Questo potrebbe essere non sicuro (anche perché è esposto come http in chiaro). 
+# Inoltre se volessimo creare delle repliche del nostro servizio non lo potremmo fare. Sarebbe meglio aggiungere uno strato intermedio con un 
+# bilanciatore, in particolare un haproxy, per fare in modo di non esporre direttamente il nostro servizio (su questo in seguito dovrà essere la gestione della 
+# comunicazione in https tramite dei certificati, fuori scope per l'esercizio). 
+#
+# Suggerimento 1: trovate il file di configurazione dell'haproxy nella cartella omonima 
+# Suggerumento 2: il quarkus non dovrà più esporre la porta 8080 all'esterno 
+
+#  haproxy:
+#    profiles: ["all"]
+#    image: haproxy:latest
+#    container_name: haproxy
+#    ports:
+#      - TODO
+#    volumes:
+#      - TODO
+#    depends_on:
+#      - quarkus-app
+#    networks:
+#      - quarkus-network
+
+networks:
+  quarkus-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
